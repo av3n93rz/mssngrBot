@@ -5,8 +5,17 @@ module.exports = function (api) {
     description: 'Consult the mystical RNG!11oneone',
     function: function (messageObj, str) {
       if (!(str = str.trim())) throw Error('No input')
-      const elems = str.split(' ')
-      return 'RNG has chosen ' + elems[Math.floor(Math.random() * elems.length)] + '!'
+      let elems
+      if(str.includes(',')) {
+        elems = str.split(',')
+      } else {
+        elems = str.split(' ')
+      }
+      const chosen = decodeURIComponent(escape(elems[Math.floor(Math.random() * elems.length)]))
+      return {
+        type: 'message',
+        message: 'RNG has chosen ' + chosen + '!'
+      }
     }
   }
 }

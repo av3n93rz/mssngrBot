@@ -1,4 +1,4 @@
-module.exports = function (api) {
+module.exports = function () {
   return {
     name: ['rng'],
     admin: false,
@@ -11,7 +11,10 @@ module.exports = function (api) {
       const ub = Number(elems[1])
       if (isNaN(lb) || isNaN(ub) || ub < lb) throw Error('Bad range')
 
-      return 'RNG has chosen ' + (Math.floor(Math.random() * (ub - lb + 1)) + lb) + '!'
+      return {
+        type: 'message',
+        message: 'RNG has chosen ' + (Math.floor(Math.random() * (ub - lb + 1)) + lb) + '!'
+      }
     }
   }
 }

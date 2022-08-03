@@ -8,11 +8,13 @@
     "url": "git+https://github.com/featherbear/bearnetbot.git"
   },
   "dependencies": {
-    "facebook-messenger-puppeteer": "github:featherbear/facebook-messenger-puppeteer#7daacddbd5a2522e897abe01e525417e5f581de4",
     "moment-timezone": "^0.5.33",
     "node-wol": "^0.1.1",
     "request": "^2.88.0",
-    "trello": "^0.9.1"
+    "trello": "^0.9.1",
+    "atob": "^2.1.2",
+    "puppeteer": "^5.2.1",
+    "queue": "^6.0.1"
   },
   "devDependencies": {},
   "author": "featherbear",

@@ -2,7 +2,7 @@ const path = require('path')
 const fs = require('fs')
 
 const config = require('./.config.js')
-const Client = require('./puppeteer')
+const Client = require('./api')
 
 ;(async () => {
   const bot = new Client({
@@ -31,15 +31,13 @@ const Client = require('./puppeteer')
 
   const _modules = [
     'help',
-    'wake-on-lan',
+    'euro',
     'rng_range',
     'rng_choice',
-    'paiza.io',
     'lmgtfy',
-    'life360',
     'permissions',
+    'cointoss',
     'ping',
-    'threes'
   ]
 
   const commands = {}
@@ -61,13 +59,27 @@ const Client = require('./puppeteer')
   bot.commands = commands
 
   const commandMap = {}
+
   for (const commandStr in commands) {
     for (const name of commands[commandStr].name) {
       commandMap[name.toLowerCase()] = commands[commandStr]
     }
   }
 
+  fs.readdirSync('./images').forEach(file => {
+    const [name] = file.split('.')
+    commandMap[name] = {
+      ...(require(path.join(
+        __dirname,
+        'modules',
+        'img'
+      ))(bot)),
+      name: [ name ],
+    }
+  });
+
   bot.commandMap = commandMap
+  
   bot.commandRequiresAdmin = function (commandStr) {
     return commandMap[commandStr].admin
   }
@@ -75,7 +87,6 @@ const Client = require('./puppeteer')
   let ignore = {};
 
   bot.listen(async message => {
-    
     const timerIgnore = () =>
       setTimeout(() => {
         delete ignore[message.thread]
@@ -141,9 +152,19 @@ const Client = require('./puppeteer')
           tokens.slice(1).join(' ')
         )
         if (response) {
+          if (typeof response === 'object') {
+            if(response.type === 'message') {
+              bot.sendMessage(message.thread, response.message)
+              return
+            }
+            if(response.type === 'image') {
+              bot.sendImage(message.thread, response.path)
+              return
+            }
+          }
+
           bot.sendMessage(message.thread, response)
         }
-        // Catch exception messages
       } catch (err) {
         console.log(err)
         bot.sendMessage(message.thread, `${err}`)

@@ -161,7 +161,7 @@ module.exports = class {
   async login (email, password) {
     console.log('Logging in...')
     const browser = (this._browser = await puppeteer.launch({
-      headless: !process.env.DEBUG
+      headless: false,
     }))
     const page = (this._masterPage = (await browser.pages())[0]) // await browser.newPage())
 
@@ -223,7 +223,7 @@ module.exports = class {
   }
 
   async sendMessage (target, data) {
-    console.log(console.log(target));
+
     if (typeof data === 'number') {
       data = data.toString()
     } else if (typeof data === 'function') {
@@ -233,7 +233,7 @@ module.exports = class {
     this._delegate(target, async function () {
       const inputElem = await this.$('[role="textbox"]')
       await inputElem.type(data)
-      await this.$eval('button[name=send]', elem => elem.click());
+      await this.$eval('aria/Press enter to send', elem => elem.click())
     })
   }
 
@@ -324,12 +324,11 @@ module.exports = class {
     return this._delegate(target, async function () {
 
       for (const imagePath of images) {
-        let uploadBtn = await this.$('input[type=file][data-sigil="m-raw-file-input"]')
+        let uploadBtn = await this.$('input[type=file]')
         await uploadBtn.uploadFile(imagePath)
       }
-
-      await this.waitForSelector('button[name=send]:not([disabled])')
-      await this.$eval('button[name=send]', elem => elem.click())
+      //await this.waitForSelector('aria/Press enter to send:not([disabled])')
+      await this.$eval('aria/Press enter to send', elem => elem.click())
     })
   }
 }

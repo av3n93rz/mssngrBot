@@ -1,8 +1,11 @@
-module.exports = function (api) {
+module.exports = function () {
   return {
     name: ['ping'],
     admin: false,
     description: 'Health status check',
-    function: () => 'Pong!'
+    function: () => ({
+      type: 'message',
+      message: 'Pong!'
+    })
   }
 }
