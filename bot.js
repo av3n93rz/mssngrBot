@@ -1,18 +1,15 @@
-const path = require('path')
-const fs = require('fs')
 const get_client = require('./get_client.js');
 const login = require('./login.js');
 const load_modules = require('./load_modules.js');
 const bear = require('./bear.js');
-const config = require('./.config.js');
+require('dotenv').config();
 
 (async () => {
   const bot = get_client()
   await login(bot)
-    
   bot.id = bot.uid
-  bot.admins = config.bot_admins
-  bot.command_prefix = config.bot_command_prefix
+  bot.admins = JSON.parse(process.env.ADMINS)
+  bot.command_prefix = process.env.BOT_COMMAND_PREFIX
 
   const { commands, commandMap} = load_modules(bot)
   
@@ -29,13 +26,13 @@ const config = require('./.config.js');
     if (bear(message, bot) === true) return;
 
     // Check if the message starts with the command prefix
-    if (!message.body.startsWith(config.bot_command_prefix)) return
+    if (!message.body.startsWith(bot.command_prefix)) return
 
     // Break down
     const tokens = message.body.split(' ')
     const commandStr = tokens[0]
       .toLowerCase()
-      .replace(config.bot_command_prefix.toLowerCase(), '')
+      .replace(bot.command_prefix.toLowerCase(), '')
 
     // Check of the command exists
     if (commandStr in bot.commandMap) {

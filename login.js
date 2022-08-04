@@ -1,10 +1,10 @@
 const path = require('path');
 const fs = require('fs');
-const config = require('./.config.js');
+require('dotenv').config()
 
 module.exports = async function (bot) {
     try {
-        await bot.login(config.facebook_username, config.facebook_password)
+        await bot.login(process.env.FB_USERNAME, process.env.FB_PASSWORD)
       } catch (err) {
         console.error(`Error: ${err}`)
         process.exit(1)

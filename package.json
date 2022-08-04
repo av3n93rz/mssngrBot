@@ -10,6 +10,7 @@
   "dependencies": {
     "atob": "^2.1.2",
     "cleverbot-api-free": "^1.0.1",
+    "dotenv": "^16.0.1",
     "moment-timezone": "^0.5.33",
     "node-wol": "^0.1.1",
     "puppeteer": "^5.2.1",
