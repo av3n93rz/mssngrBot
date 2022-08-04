@@ -63,10 +63,11 @@ module.exports = function (api) {
         .toLowerCase()
         .replace(api.command_prefix.toLowerCase(), '')
       const check = (() => {
+        console.log("SENDER",messageObj.sender)
         const check = PermissionManager.check(messageObj.sender, commandStr)
         if (check) return true
         if (typeof check === 'undefined') {
-          if (!api.commandMap[commandStr]._admin) return true
+          if (!api.commandMap.all[commandStr]._admin) return true
           if (api.admins.indexOf(Number(messageObj.sender)) > -1) return true
         }
         return false
@@ -78,14 +79,14 @@ module.exports = function (api) {
   }
 
   api.commandRequiresAdmin = function (commandStr) {
-    return api.commandMap[commandStr]._admin
+    return api.commandMap.all[commandStr]._admin
   }
 
   const funcs = {
     list: function () {
       return [
         'Availabe command permission strings:',
-        ...Object.keys(api.commandMap).sort()
+        ...Object.keys(api.commandMap.all).sort()
       ].join('\n')
     },
 
@@ -162,13 +163,13 @@ module.exports = function (api) {
     },
     onFinishLoad: function () {
       // Set wrapper
-      for (const commandStr in api.commandMap) {
-        api.commandMap[commandStr].function = permissionsFunctionWrapper(
-          api.commandMap[commandStr].function
+      for (const commandStr in api.commandMap.all) {
+        api.commandMap.all[commandStr].function = permissionsFunctionWrapper(
+          api.commandMap.all[commandStr].function
         )
-        api.commandMap[commandStr]._admin =
-          api.commandMap[commandStr].admin || false
-        api.commandMap[commandStr].admin = false
+        api.commandMap.all[commandStr]._admin =
+          api.commandMap.all[commandStr].admin || false
+        api.commandMap.all[commandStr].admin = false
       }
     }
   }
