@@ -7,6 +7,9 @@
     "type": "git",
     "url": "git+https://github.com/featherbear/bearnetbot.git"
   },
+  "scripts": {
+    "start": "sh ./run.sh"
+  },
   "dependencies": {
     "atob": "^2.1.2",
     "cleverbot-api-free": "^1.0.1",
