@@ -54,7 +54,6 @@ module.exports = class {
     })
 
     const pushQueue = async (workerObj, fn) => {
-
       console.debug('Pushing function to worker thread', workerObj.id)
 
       workerObj.queue.push(async finish => {
@@ -246,76 +245,7 @@ module.exports = class {
         }
       })
   }
-/* 
-  async sendBinary () {
-    const wsPrototypeHandle = await this._masterPage.evaluateHandle(
-      () => WebSocket.prototype
-    );
-    const socketInstances = await this._masterPage.queryObjects(wsPrototypeHandle);
-    await this._masterPage.evaluate((instances) => {
 
-      const adat = JSON.stringify({
-        "request_id": 82,
-        "type": 3,
-        "payload": {
-          "version_id": "5705862956115146",
-          "tasks": [
-            {
-              "label": "46",
-              "payload": {
-                "thread_id": 100001259484934,
-                "otid": "6960894459338955150",
-                "source": 65537,
-                "send_type": 1,
-                "text": "ASDASDASDASDASDASDASDASD",
-                "initiating_source": 1,
-                "skip_url_preview_gen": 0
-              },
-              "queue_name": "100001259484934",
-              "task_id": 87,
-              "failure_count": null
-            },
-            {
-              "label": "21",
-              "payload": {
-                "thread_id": 100001259484934,
-                "last_read_watermark_ts": 1659606566271,
-                "sync_group": 1
-              },
-              "queue_name": "100001259484934",
-              "task_id": 88,
-              "failure_count": null
-            }
-          ],
-          "epoch_id": 6960894459437251059,
-          "data_trace_id": "#j5ubtjvvQNapAv7zLmkSzw"
-        },
-        "app_id": "2220391788200892"
-      })
-      const hexEncode = function (str) {
-        var result = '';
-        for (var i=0; i<str.length; i++) {
-          result += str.charCodeAt(i).toString(16);
-        }
-        return result;
-      }
-      
-    let bytearray = new Uint8Array( adat.length );
-    for ( let i = 0; i < adat.length; ++i ) {
-        bytearray[i] = adat[i];
-    }
-
-      const socket = instances.reduce((acc, w) => {
-        if(w['url'].contains('edge-chat')) {
-          return [...acc, w]
-        }
-        return acc
-      }, [])
-      let instance = socket[0]; 
-      instance.send(bytearray.buffer)
-    }, socketInstances);
-  }
- */
   _stopListen (optionalCallback) {
     const client = this._masterPage._client
 

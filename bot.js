@@ -1,34 +1,34 @@
-const config = require('./.config.js');
+const path = require('path')
+const fs = require('fs')
 const get_client = require('./get_client.js');
 const login = require('./login.js');
 const load_modules = require('./load_modules.js');
 const bear = require('./bear.js');
+const config = require('./.config.js');
 
 (async () => {
   const bot = get_client()
   await login(bot)
-  
+    
   bot.id = bot.uid
   bot.admins = config.bot_admins
   bot.command_prefix = config.bot_command_prefix
-  
-  const { commands, commandMap} = load_modules(bot)
 
+  const { commands, commandMap} = load_modules(bot)
+  
   bot.commands = commands
-  bot.commandMap = {
-    all: commandMap
-  }
+  bot.commandMap = commandMap
   
   bot.commandRequiresAdmin = function (commandStr) {
-    return bot.commandMap.all[commandStr].admin
+    return bot.commandMap[commandStr].admin
   }
 
   bot.listen(async message => {
-    console.log('MESSAGE', message)
     //TODO: download attachments
     //console.log(JSON.stringify(message.attachments[0].mercury.blob_attachment.large_preview.uri))
-    
     if (bear(message, bot) === true) return;
+
+    // Check if the message starts with the command prefix
     if (!message.body.startsWith(config.bot_command_prefix)) return
 
     // Break down
@@ -37,12 +37,8 @@ const bear = require('./bear.js');
       .toLowerCase()
       .replace(config.bot_command_prefix.toLowerCase(), '')
 
-    /* if(commandStr === 'bin') {
-      bot.sendBinary()
-    } */
-
     // Check of the command exists
-    if (commandStr in bot.commandMap.all) {
+    if (commandStr in bot.commandMap) {
       // Check if the user has permission to run the command
       if (
         bot.commandRequiresAdmin(commandStr) &&
@@ -58,7 +54,7 @@ const bear = require('./bear.js');
 
       // Try run the command
       try {
-        const response = await bot.commandMap.all[commandStr].function(
+        const response = await bot.commandMap[commandStr].function(
           message,
           tokens.slice(1).join(' ')
         )

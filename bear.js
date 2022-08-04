@@ -33,4 +33,9 @@ module.exports = async function (message, bot) {
         return true
       }
     }
+
+    if (/h\s*u[-]?\s*h\s*u/gi.test(message.body)) {
+      await bot.sendImage(message.thread, path.join(__dirname,'images','huhu.jpg'))
+      return true
+    } 
 }
