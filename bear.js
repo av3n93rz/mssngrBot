@@ -1,6 +1,13 @@
+const path = require('path');
+
 let ignore = {};
 
 module.exports = async function (message, bot) {
+
+  if (/h\s*u[-]?\s*h\s*u/gi.test(message.body)) {
+    await bot.sendImage(message.thread, path.join(__dirname,'images','huhu.jpg'))
+    return true
+  } 
 
     const timerIgnore = () =>
       setTimeout(() => {
@@ -33,9 +40,4 @@ module.exports = async function (message, bot) {
         return true
       }
     }
-
-    if (/h\s*u[-]?\s*h\s*u/gi.test(message.body)) {
-      await bot.sendImage(message.thread, path.join(__dirname,'images','huhu.jpg'))
-      return true
-    } 
 }

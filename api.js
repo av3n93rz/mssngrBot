@@ -161,7 +161,7 @@ module.exports = class {
   async login (email, password) {
     console.log('Logging in...')
     const browser = (this._browser = await puppeteer.launch({
-      headless: false,
+      headless: true,
       //devtools: true
     }))
     const page = (this._masterPage = (await browser.pages())[0]) // await browser.newPage())
