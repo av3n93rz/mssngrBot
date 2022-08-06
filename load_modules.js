@@ -11,7 +11,8 @@ const _modules = [
     'cointoss',
     'ping',
     'yorn',
-    'beszartam'
+    'beszartam',
+    'memegenerator'
   ]
 
 module.exports = function (bot) {
