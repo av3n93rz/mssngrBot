@@ -134,7 +134,7 @@ module.exports = function (api) {
   }
 
   return {
-    name: ['perm', 'permissions'],
+    name: ['permissions'],
     admin: true,
     description: 'Provides help',
 

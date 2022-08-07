@@ -8,13 +8,17 @@
     "url": "git+https://github.com/featherbear/bearnetbot.git"
   },
   "scripts": {
-    "start": "sh ./run.sh"
+    "start": "node bot.js"
   },
   "dependencies": {
     "atob": "^2.1.2",
     "axios": "^0.27.2",
+    "canvas": "^2.9.3",
     "cleverbot-api-free": "^1.0.1",
     "dotenv": "^16.0.1",
+    "image-size": "^1.0.2",
+    "img-clipboard": "^1.1.0",
+    "meme-maker": "^2.1.2",
     "moment-timezone": "^0.5.33",
     "node-wol": "^0.1.1",
     "puppeteer": "^5.2.1",

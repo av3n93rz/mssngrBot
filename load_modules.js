@@ -12,7 +12,7 @@ const _modules = [
     'ping',
     'yorn',
     'beszartam',
-    'memegenerator'
+    'meme'
   ]
 
 module.exports = function (bot) {

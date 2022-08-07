@@ -230,12 +230,22 @@ module.exports = class {
     } else if (typeof data === 'function') {
       data = await data()
     }
+
       this._delegate(target, async function () {
         try {
           const inputField = await this.$('[role="textbox"]')
           if(inputField) {
             inputField.value = ''
-            await inputField.type(data)
+            if(data.includes('\n')){
+              for (const line of data.split('\n')) {
+                await inputField.type(line)
+                this.keyboard.down('Shift');
+                this.keyboard.down('Enter');
+                this.keyboard.up('Shift');
+              }
+            } else {
+              await inputField.type(data)
+            }
           } else {
             throw new Error('Input field not found')
           }
@@ -333,12 +343,28 @@ module.exports = class {
 
     return this._delegate(target, async function () {
 
-      for (const imagePath of images) {
-        let uploadBtn = await this.$('input[type=file]')
-        await uploadBtn.uploadFile(imagePath)
+      try {
+        await this.$eval('aria/Remove attachment', elem => {
+          console.log(elem)
+          if(elem) {
+            elem.click()
+          }
+        })
+      } catch (e) {
+        console.log('No attachments')
       }
-      //await this.waitForSelector('aria/Press enter to send:not([disabled])')
-      await this.$eval('aria/Press enter to send', elem => elem.click())
+
+      try {
+        for (const imagePath of images) {
+          let uploadBtn = await this.$('input[type=file]')
+          await uploadBtn.uploadFile(imagePath)
+        }
+        //await this.waitForSelector('aria/Press enter to send:not([disabled])')
+        await this.$eval('aria/Press enter to send', elem => elem.click())
+      } catch (e) {
+        console.log(e)
+      }
     })
+    
   }
 }

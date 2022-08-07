@@ -2,6 +2,7 @@ const get_client = require('./get_client.js');
 const login = require('./login.js');
 const load_modules = require('./load_modules.js');
 const bear = require('./bear.js');
+const save_template = require('./save_template.js');
 require('dotenv').config();
 
 (async () => {
@@ -22,11 +23,10 @@ require('dotenv').config();
 
   bot.listen(async message => {
     //TODO: download attachments
-    //console.log(JSON.stringify(message.attachments[0].mercury.blob_attachment.large_preview.uri))
     if (bear(message, bot) === true) return;
 
     // Check if the message starts with the command prefix
-    if (!message.body.startsWith(bot.command_prefix)) return
+    if (!message.body.startsWith(bot.command_prefix) && message.attachments.length === 0) return
 
     // Break down
     const tokens = message.body.split(' ')
@@ -34,6 +34,11 @@ require('dotenv').config();
       .toLowerCase()
       .replace(bot.command_prefix.toLowerCase(), '')
 
+    
+    const template = await save_template(message, tokens.slice(1).join(' '), bot, commandStr)
+    if(template) return;
+    
+     
     // Check of the command exists
     if (commandStr in bot.commandMap) {
       // Check if the user has permission to run the command
