@@ -19,6 +19,7 @@ module.exports = function () {
       }
 
       const path = `${__dirname}/${process.env.LOGS_PATH}`
+      console.log(path)
       try {
         const get_logs = () => new Promise((resolve) =>{
           readLastLines.read(path, query).then((lines) => {
