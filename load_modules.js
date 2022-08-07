@@ -12,7 +12,8 @@ const _modules = [
     'ping',
     'yorn',
     'beszartam',
-    'meme'
+    'meme',
+    'logs'
   ]
 
 module.exports = function (bot) {
