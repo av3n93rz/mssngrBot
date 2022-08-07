@@ -9,15 +9,14 @@ module.exports = function() {
         return new Promise(function(resolve, reject) {
           request(
             {
-              url: 'https://www.google.com/search?q=euro+to+huf',
+              url: 'https://www.exchange-rates.org/converter/EUR/HUF/1',
               method: 'GET',
             }, (err, status, body) => {
-                const expression = /([0-9]{3},[0-9]{2}).magyar forint/g
-                console.log(body)
-                const res = body.match(expression)[0].split(' ')[0]
+                const expression = /(1 EUR = [0-9].*\.[0-9].* HUF)/g
+                const res = body.match(expression)[0]
                 resolve({ 
                   type: 'message',
-                  message: '1 euro = ' + res + 'HUF',
+                  message: res,
                 })
             }
           )
