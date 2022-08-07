@@ -13,6 +13,7 @@ module.exports = function() {
               method: 'GET',
             }, (err, status, body) => {
                 const expression = /([0-9]{3},[0-9]{2}).magyar forint/g
+                console.log(body)
                 const res = body.match(expression)[0].split(' ')[0]
                 resolve({ 
                   type: 'message',
