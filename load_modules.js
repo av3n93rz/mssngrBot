@@ -13,7 +13,8 @@ const _modules = [
     'yorn',
     'beszartam',
     'meme',
-    'logs'
+    'logs',
+    'on_this_day'
   ]
 
 module.exports = function (bot) {
