@@ -54,7 +54,7 @@ const fitText = ({ ctx, x, y, text, fontSize, fromBottom = false }) => {
 
 const getCanvas = ({ width, image }) => {
   const canvasHeight = (image.height / image.width) * width;
-  //registerFont(`${__dirname}/fonts/impact.ttf`, { family: 'Impact' });
+  registerFont(`${__dirname}/../fonts/impact.ttf`, { family: 'Impact' });
   const canvas = createCanvas(width, canvasHeight);
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, width, canvasHeight);
