@@ -161,7 +161,7 @@ module.exports = class {
   async login (email, password) {
     console.log('Logging in...')
     const browser = (this._browser = await puppeteer.launch({
-      headless: process.env.AWS === 'AWS' ? true: false,
+      headless: process.env.ENV === 'AWS' ? true: false,
       args: ['--no-sandbox'],
       //devtools: true
     }))
