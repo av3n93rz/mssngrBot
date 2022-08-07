@@ -116,6 +116,9 @@ module.exports = function (api) {
     admin: false,
     description: '😏',
     function: async function (messageObj, q) {
+      if (!fs.existsSync(`${__dirname}/../generated_memes`)){
+        fs.mkdirSync(`${__dirname}/../generated_memes`);
+      }
 
       let rawdata = fs.readFileSync(`${__dirname}/../meme_templates.json`);
       let templates = JSON.parse(rawdata);
