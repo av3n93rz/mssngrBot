@@ -14,7 +14,8 @@ const _modules = [
     'beszartam',
     'meme',
     'logs',
-    'on_this_day'
+    'on_this_day',
+    'fbvd'
   ]
 
 module.exports = function (bot) {

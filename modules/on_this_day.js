@@ -5,7 +5,7 @@ module.exports = function () {
   return {
     name: ['otd'],
     admin: false,
-    description: 'Sends a historical event happened on the current day and month.',
+    description: 'Sends a historical event happened on the current day.',
     function: async function () {
 
       const [month, day] = moment.tz(moment(), 'Europe/Budapest').format('M/D').split('/')
