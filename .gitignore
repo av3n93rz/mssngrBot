@@ -1,5 +1,5 @@
 node_modules/
-/.appstate.json
-/.config.js
-/.permissions.json
+src/.appstate.json
+src/.config.js
+src/.permissions.json
 .env

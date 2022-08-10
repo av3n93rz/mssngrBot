@@ -1,5 +1,5 @@
 #!/bin/sh
 while true; do
-    node bot.js
+    npm run build && npm run start
     [ $? -ne 137 ] && break
 done

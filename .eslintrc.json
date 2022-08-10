@@ -1,0 +1,36 @@
+{
+  "root": true,
+  "extends": [
+    "@codingsans/eslint-config/typescript-recommended",
+    "plugin:import/errors",
+    "plugin:import/warnings",
+    "plugin:import/typescript"
+  ],
+  "parserOptions": {
+    "tsconfigRootDir": ".",
+    "project": [
+      "./tsconfig.eslint.json"
+    ],
+    "EXPERIMENTAL_useSourceOfProjectReferenceRedirect": true
+  },
+  "settings": {
+    "import/resolver": {
+      "node": {},
+      "typescript": {
+        "alwaysTryTypes": true,
+        "project": ["./tsconfig.eslint.json"]
+      }
+    }
+  },
+  "rules": {
+    "import/no-default-export": 2,
+    "import/order": 1,
+    "import/no-useless-path-segments": 1,
+    "import/no-self-import": 2,
+    "import/no-cycle": [2, { "ignoreExternal": true }],
+    "import/no-absolute-path": 2,
+    "import/newline-after-import": 2,
+    "import/first": 2,
+    "@typescript-eslint/consistent-type-imports": 1
+  }
+}

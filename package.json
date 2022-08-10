@@ -2,31 +2,40 @@
   "name": "bearnetbot",
   "version": "0.0.0",
   "description": "Facebook messenger bot",
-  "main": "bot.js",
+  "main": "src/login.ts",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/featherbear/bearnetbot.git"
   },
   "scripts": {
-    "start": "node bot.js"
+    "start": "node ./lib/bot.js",
+    "build": "tsc && cp -r ./src/assets ./lib/assets"
   },
   "dependencies": {
     "atob": "^2.1.2",
     "axios": "^0.27.2",
     "canvas": "^2.9.3",
-    "cleverbot-api-free": "^1.0.1",
     "dotenv": "^16.0.1",
     "image-size": "^1.0.2",
     "img-clipboard": "^1.1.0",
-    "meme-maker": "^2.1.2",
     "moment": "^2.29.4",
     "moment-timezone": "^0.5.33",
-    "node-wol": "^0.1.1",
     "puppeteer": "^5.2.1",
     "queue": "^6.0.1",
     "read-last-lines": "^1.8.0",
     "request": "^2.88.0",
-    "trello": "^0.9.1"
+    "typescript": "^4.7.4"
+  },
+  "devDependencies": {
+    "@codingsans/eslint-config": "^5.2.1",
+    "@ls-lint/ls-lint": "^1.9.2",
+    "@types/atob": "^2.1.2",
+    "@types/node": "^16.7.13",
+    "@types/puppeteer": "^5.4.6",
+    "eslint": "^7.19.0",
+    "eslint-import-resolver-typescript": "^2.4.0",
+    "eslint-plugin-import": "^2.22.1",
+    "prettier": "^2.2.1"
   },
   "author": "featherbear",
   "license": "MIT"
