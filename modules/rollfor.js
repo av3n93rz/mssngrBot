@@ -13,8 +13,8 @@ module.exports = function () {
       const rolledValue = Math.floor(Math.random() * 20) + 1;
 
       let message = `${rolledValue}, target${
-        rolledValue < query && " not"
-      } met!`;
+        rolledValue < query ? " not met!":" met!"
+      }`;
 
       if (rolledValue === 1 && query !== 1) {
         message = "1, Critical Fail!";
