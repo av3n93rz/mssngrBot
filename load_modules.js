@@ -15,7 +15,8 @@ const _modules = [
     'meme',
     'logs',
     'on_this_day',
-    'fbvd'
+    'fbvd',
+	'rollfor'
   ]
 
 module.exports = function (bot) {
