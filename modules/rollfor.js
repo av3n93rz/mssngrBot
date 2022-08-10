@@ -1,37 +1,33 @@
 module.exports = function () {
   return {
-    name: ['rollfor'],
+    name: ["rollfor"],
     admin: false,
-    description: 'Roll for target value',
-    function: function (messageObj, str) {
-      if (!(str = str.trim())) throw Error('No input')
+    description: "Roll for target value",
+    function: function (messageObj, query) {
+	
+      query = parseInt(query);
 
-      if (isNaN(str) ) throw Error('The target should be a number')
-	  
-	  const rolledValue = Math.floor(Math.random() * (20)) + 1
-	  
-	  if (rolledValue == 1)
-		return {
-			type: 'message',
-			message: '1, Critical Fail!'
-		}
-		
-	  if (rolledValue == 20)
-		return {
-			type: 'message',
-			message: '20, Critical Hit!'
-		}
-		
-	  if (rolledValue >= str)
-		return {
-			type: 'message',
-			message: rolledValue + ', target met!'
-		}
+      if (isNaN(query)) throw Error("The target should be a number");
+      if(query > 20 || query < 1) throw Error("Target is out of range");
+
+      const rolledValue = Math.floor(Math.random() * 20) + 1;
+
+      let message = `${rolledValue}, target${
+        rolledValue < query && " not"
+      } met!`;
+
+      if (rolledValue === 1 && query !== 1) {
+        message = "1, Critical Fail!";
+      }
+
+      if (rolledValue === 20) {
+        message = "20, Critical Hit!";
+      }
 
       return {
-			type: 'message',
-			message: rolledValue + ', target not met!'
-	  }
-    }
-  }
-}
+        type: "message",
+        message,
+      };
+    },
+  };
+};
