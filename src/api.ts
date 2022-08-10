@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import type { ElementHandle, Page, Browser, Response } from 'puppeteer';
+import type Puppeteer from 'puppeteer';
+import type { ElementHandle, Page, Browser, Response, Cookie, SetCookie } from 'puppeteer';
 import puppeteer from 'puppeteer';
 import atob from 'atob';
 import type { QueueWorkerCallback } from 'queue';
@@ -10,7 +11,7 @@ const Order = Symbol('Order');
 export interface Client {}
 
 type Options = {
-  session?: unknown;
+  session?: SetCookie[];
   selfListen?: boolean;
   workerLimit?: number;
 };
@@ -27,13 +28,15 @@ type WorkerObj = {
 export class Client {
   options;
   _browser: Browser | null;
-  _masterPage: unknown;
+  _masterPage: Page | null;
   _workerPages: WorkerObj[];
   _listenFns: unknown;
   _aliasMap: Record<string, string>;
   uid: unknown;
   _messageQueueIncoming: unknown;
-  _actionQueueOutgoing: Record<string | typeof Order, unknown[]>;
+  _actionQueueOutgoing: Record<string, (()=> Promise<void>)[]> & {
+    [Order]: string[]
+  };
 
   constructor(options: Options) {
     this.options = {
@@ -189,17 +192,18 @@ export class Client {
     return promise;
   }
 
-  async getSession() {
-    return this._masterPage.cookies();
+  async getSession(): Promise<Cookie[]> {
+    return this._masterPage!.cookies();
   }
 
-  async login(email, password) {
+  async login(email: string, password: string): Promise<void> {
     console.log('Logging in...');
     const browser = (this._browser = await puppeteer.launch({
       headless: process.env.ENV === 'AWS' ? true : false,
       args: ['--no-sandbox'],
       //devtools: true
     }));
+
     const page = (this._masterPage = (await browser.pages())[0]); // await browser.newPage())
 
     if (this.options.session) {
@@ -216,14 +220,24 @@ export class Client {
     // If there's a session (from cookie), then skip login
     if (page.url().startsWith('https://m.facebook.com/login.php')) {
       await (async function (cb, ...items) {
-        return Promise.all(items.map((q) => page.$(q))).then(async (r) => cb(...r));
+        return Promise.all(items.map(async (q) => page.$(q))).then(async (r) => {
+          const fields: [Puppeteer.ElementHandle<Element> | null, Puppeteer.ElementHandle<Element> | null] = [r[0], r[1]]
+          return cb(...fields)
+        });
       })(
-        async (emailField, passwordField, submitButton) => {
+        async (
+          emailField: Puppeteer.ElementHandle<Element> | null,
+          passwordField: Puppeteer.ElementHandle<Element> | null,
+        ) => {
           // Looks like we're unauthenticated
-          await emailField.type(email);
-          await passwordField.type(password);
+          await emailField?.type(email);
+          await passwordField?.type(password);
           const navigationPromise = page.waitForNavigation();
-          page.$eval('button[name=login]', (elem) => elem.click());
+          void page.$eval('button[name=login]', (elem: Element) => {
+            // @ts-expect-error click does exist
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+            elem.click();
+          });
           await navigationPromise;
 
           await page.goto('https://facebook.com/messages', {
@@ -232,11 +246,10 @@ export class Client {
         },
         'input[name=email]',
         'input[name=pass]',
-        'button[name=login]',
       );
     }
 
-    this.uid = (await this.getSession()).find((cookie) => cookie.name === 'c_user').value;
+    this.uid = (await this.getSession()).find((cookie) => cookie.name === 'c_user')!.value;
 
     // await page.goto(`https://messenger.com/t/${this.uid}`, {
     //   waitUntil: 'networkidle2'
@@ -250,14 +263,11 @@ export class Client {
 
     const threadPrefix = 'https://facebook.com/messages/t/';
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-    let slug = (page.url() as string).substring(threadPrefix.length);
+    let slug = page.url().substring(threadPrefix.length);
 
     if (target === this.threadHandleToID(slug)) {
       return null;
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
     const response = await page.goto(`${threadPrefix}${target}`, {
       waitUntil: 'networkidle2',
     });
@@ -275,26 +285,28 @@ export class Client {
       data = await data();
     }
 
-    void this._delegate(target, async () => {
+    void this._delegate(target, async function (this: Page) {
       try {
         const inputField = await this.$('[role="textbox"]');
         if (inputField) {
+          // @ts-expect-error maybe should be done with eval
           inputField.value = '';
-          if (data.includes('\n')) {
-            for (const line of data.split('\n')) {
+          if (
+            (data as string).includes('\n')) {
+            for (const line of (data as string).split('\n')) {
               await inputField.type(line);
               this.keyboard.down('Shift');
               this.keyboard.down('Enter');
               this.keyboard.up('Shift');
             }
           } else {
-            await inputField.type(data);
+            await inputField.type(data as string);
           }
         } else {
           throw new Error('Input field not found');
         }
 
-        await this.$eval('aria/Press enter to send', (elem) => elem.click());
+        this.keyboard.down('Enter');
       } catch (e) {
         console.log(e);
       }
@@ -397,14 +409,14 @@ export class Client {
     return () => this._stopListen(callback);
   }
 
-  async sendImage(target, imagePathOrImagePaths) {
+  async sendImage(target: string, imagePathOrImagePaths: string | string[]) {
     if (!imagePathOrImagePaths) {
       return;
     }
 
     const images = Array.isArray(imagePathOrImagePaths) ? imagePathOrImagePaths : Array(imagePathOrImagePaths);
 
-    return this._delegate(target, async function () {
+    return this._delegate(target, async function (this: Page) {
       try {
         await this.$eval('aria/Remove attachment', (elem) => {
           console.log(elem);
