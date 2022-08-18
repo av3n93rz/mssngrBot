@@ -22,7 +22,9 @@ require('dotenv').config();
   }
 
   bot.listen(async message => {
-    //TODO: download attachments
+
+    if(message.sender === process.env.BOT_FB_ID) return;
+
     if (bear(message, bot) === true) return;
 
     // Check if the message starts with the command prefix
