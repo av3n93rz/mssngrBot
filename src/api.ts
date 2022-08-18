@@ -10,6 +10,16 @@ const Order = Symbol('Order');
 
 export interface Client {}
 
+type MessageObj = {
+  messageId: string | number;
+  sender:  string | number;
+  timestamp:  string | number;
+  thread:  string | number;
+  body: string;
+  attachments: unknown;
+  repliedToMessage?: Omit<MessageObj, 'repliedToMessage'>;
+}
+
 type Options = {
   session?: SetCookie[];
   selfListen?: boolean;
@@ -331,7 +341,7 @@ export class Client {
     return this.listenRaw(async (messageObj) => await callback(messageObj));
   }
 
-  listenRaw(callback) {
+  listenRaw(callback: (message: MessageObj) => Promise<void>) {
     if (this._listenFns === null) {
       this._listenFns = [];
 
