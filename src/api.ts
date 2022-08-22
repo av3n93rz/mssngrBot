@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import type Puppeteer from 'puppeteer';
-import type { ElementHandle, Page, Browser, Response, Cookie, SetCookie } from 'puppeteer';
+import type { ElementHandle, Page, Browser, Response, Cookie, SetCookie, EventEmitter } from 'puppeteer';
 import puppeteer from 'puppeteer';
 import atob from 'atob';
 import type { QueueWorkerCallback } from 'queue';
@@ -30,7 +30,7 @@ type WorkerObj = {
   id: unknown;
   queue: Queue;
   lastActivity: Date;
-  active: unknown;
+  active: boolean;
   page?: Page;
   thread: string | null;
 };
@@ -38,12 +38,12 @@ type WorkerObj = {
 export class Client {
   options;
   _browser: Browser | null;
-  _masterPage: Page | null;
+  _masterPage: Page & {_client?: EventEmitter} | null;
   _workerPages: WorkerObj[];
-  _listenFns: Array<(message: MessageObj) => Promise<void>> | null;
+  _listenFns: Array<(message: MessageObj) => Promise<void>>;
   _aliasMap: Record<string, string>;
-  uid: unknown;
-  _messageQueueIncoming: unknown;
+  uid: string | null;
+  _messageQueueIncoming: Queue;
   _actionQueueOutgoing: Record<string, (()=> Promise<void>)[]> & {
     [Order]: string[]
   };
@@ -59,7 +59,7 @@ export class Client {
     this._browser = null; // Puppeteer instance
     this._masterPage = null; // Holds the master page
     this._workerPages = []; // Holds the worker pages
-    this._listenFns = null; // Begin as null, changes to [] when primed
+    this._listenFns = []; // Begin as null, changes to [] when primed
     this._aliasMap = {}; // Maps user handles to IDs
     this.uid = null; // Holds the user's ID when authenticated
 
@@ -76,27 +76,18 @@ export class Client {
     };
   }
 
-  threadHandleToID = (handle: string): string => {
-    // FIXME: Should this be ID to Handle???
-    // Received messages contain the ID
-    // Outgoing messages get changed to the handle
-    // But if a user changes their username, the cache will be wrong
-    return this._aliasMap[handle] || handle;
-  };
+  threadHandleToID = (handle: string) => this._aliasMap[handle] || handle;
 
   async _delegate(thread: string, fn: () => Promise<void>): Promise<unknown> {
     console.debug('Received function ', fn, thread);
-    if (!thread) {
-      throw new Error('No thread target');
-    }
-    thread = thread.toString();
 
     let _resolve: (value: unknown) => void;
+
     const promise = new Promise((resolve) => {
       _resolve = resolve;
     });
 
-    const pushQueue = async (workerObj: WorkerObj, fn: () => Promise<void>): Promise<void> => {
+    const pushQueue = (workerObj: WorkerObj, fn: () => Promise<void>): void => {
       console.debug('Pushing function to worker thread', workerObj.id);
 
       workerObj.queue.push(async (finish: QueueWorkerCallback | undefined) => {
@@ -104,7 +95,7 @@ export class Client {
         workerObj.active = true;
         workerObj.lastActivity = new Date();
         _resolve(await fn.apply(workerObj.page));
-        finish?.();
+        finish && finish();
       });
     };
 
@@ -117,9 +108,9 @@ export class Client {
       workerObj.thread = null;
       workerObj.queue.autostart = false;
 
-      hookFn && (await hookFn());
+      await hookFn()
 
-      await this._setTarget(workerObj.page as Page, newThread);
+      await this._setTarget(workerObj.page!, newThread);
       workerObj.thread = newThread;
       workerObj.queue.start();
       workerObj.queue.autostart = true;
@@ -129,7 +120,6 @@ export class Client {
 
     if (target) {
       console.debug('Existing worker thread found, pushing');
-      // Push new action to target worker queue
       void pushQueue(target, fn);
     } else {
       console.debug('Target worker thread not found');
@@ -214,15 +204,12 @@ export class Client {
       //devtools: true
     }));
 
-    const page = (this._masterPage = (await browser.pages())[0]); // await browser.newPage())
+    const page = (this._masterPage = (await browser.pages())[0]);
 
     if (this.options.session) {
       await page.setCookie(...this.options.session);
     }
-
-    // await page.setUserAgent("Mozilla/5.0 (Android 7.0; Mobile; rv:54.0) Gecko/54.0 Firefox/54.0")
-
-    // Go to the login page
+  
     await page.goto('https://m.facebook.com/login.php', {
       waitUntil: 'networkidle2',
     });
@@ -316,7 +303,7 @@ export class Client {
           throw new Error('Input field not found');
         }
 
-        this.keyboard.down('Enter');
+        this.keyboard.press('Enter');
       } catch (e) {
         console.log(e);
       }
@@ -324,7 +311,7 @@ export class Client {
   }
 
   _stopListen(optionalCallback: (message: MessageObj) => Promise<void>) {
-    const client = this._masterPage?._client;
+    const client = this._masterPage?._client!;
 
     if (typeof optionalCallback === 'function') {
       client.off('Network.webSocketFrameReceived', optionalCallback);
@@ -347,7 +334,7 @@ export class Client {
     if (this._listenFns === null) {
       this._listenFns = [];
 
-      this._masterPage?._client.on('Network.webSocketFrameReceived', async ({ response }: Record<string, unknown>) => {
+      this._masterPage?._client!.on('Network.webSocketFrameReceived', async ({ response }: Record<string, unknown>) => {
         const { payloadData } = response as {payloadData: string};
         if (payloadData.length > 16) {
           try {
@@ -361,9 +348,9 @@ export class Client {
                     continue deltaLoop;
                   }
 
-                  const newMessage = {
+                  const newMessage: MessageObj = {
                     body: delta.body || '',
-                    thread: Object.values(delta.messageMetadata.threadKey)[0],
+                    thread: Object.values(delta.messageMetadata.threadKey)[0] as string,
                     sender: delta.messageMetadata.actorFbId,
                     timestamp: delta.messageMetadata.timestamp,
                     messageId: delta.messageMetadata.messageId,
@@ -373,28 +360,29 @@ export class Client {
                     for (const callback of this._listenFns) {
                       this._messageQueueIncoming.push(async (finish) => {
                         await callback(newMessage);
-                        finish();
+                        finish && finish();
                       });
                     }
                   }
+                  break;
                 case 'ClientPayload':
-                  const parsedPayload = JSON.parse(delta.payload.map((c) => String.fromCharCode(c)).join(''));
+                  const parsedPayload = JSON.parse(delta.payload.map((c: number) => String.fromCharCode(c)).join(''));
                   const {
                     deltaMessageReply: { message, repliedToMessage },
                   } = parsedPayload.deltas[0];
 
-                  const newReply = {
+                  const newReply: MessageObj = {
                     messageId: message.messageMetadata.messageId,
                     sender: message.messageMetadata.actorFbId,
                     timestamp: message.messageMetadata.timestamp,
-                    thread: Object.values(message.messageMetadata.threadKey)[0],
+                    thread: Object.values(message.messageMetadata.threadKey)[0] as string,
                     body: message.body || '',
                     attachments: message.attachments,
                     repliedToMessage: {
                       messageId: repliedToMessage.messageMetadata.messageId,
                       sender: repliedToMessage.messageMetadata.actorFbId,
                       timestamp: repliedToMessage.messageMetadata.timestamp,
-                      thread: Object.values(repliedToMessage.messageMetadata.threadKey)[0],
+                      thread: Object.values(repliedToMessage.messageMetadata.threadKey)[0] as string,
                       body: repliedToMessage.body,
                       attachments: repliedToMessage.attachments,
                     },
@@ -403,14 +391,13 @@ export class Client {
                   for (const callback of this._listenFns) {
                     this._messageQueueIncoming.push(async (finish) => {
                       await callback(newReply);
-                      finish();
+                      finish && finish();
                     });
                   }
               }
             }
           } catch (e) {
-            // * screams in void *
-            //   console.debug(atob(payloadData.substr(16)))
+            console.error(e);
           }
         }
       });
@@ -447,8 +434,7 @@ export class Client {
           const uploadBtn = await this.$('input[type=file]');
           await uploadBtn.uploadFile(imagePath);
         }
-        //await this.waitForSelector('aria/Press enter to send:not([disabled])')
-        await this.$eval('aria/Press enter to send', (elem) => elem.click());
+        this.keyboard.press('Enter');
       } catch (e) {
         console.log(e);
       }
