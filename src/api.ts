@@ -40,7 +40,7 @@ export class Client {
   _browser: Browser | null;
   _masterPage: Page | null;
   _workerPages: WorkerObj[];
-  _listenFns: unknown;
+  _listenFns: Array<(message: MessageObj) => Promise<void>> | null;
   _aliasMap: Record<string, string>;
   uid: unknown;
   _messageQueueIncoming: unknown;
@@ -323,21 +323,23 @@ export class Client {
     });
   }
 
-  _stopListen(optionalCallback) {
-    const client = this._masterPage._client;
+  _stopListen(optionalCallback: (message: MessageObj) => Promise<void>) {
+    const client = this._masterPage?._client;
 
     if (typeof optionalCallback === 'function') {
       client.off('Network.webSocketFrameReceived', optionalCallback);
-      this._listenFns = this._listenFns.filter((callback) => callback !== optionalCallback);
+      this._listenFns = this._listenFns?.filter((callback) => callback !== optionalCallback) ?? [];
     } else {
-      for (const callback of this._listenFns) {
-        client.off('Network.webSocketFrameReceived', callback);
+      if(this._listenFns) {
+        for (const callback of this._listenFns) {
+          client.off('Network.webSocketFrameReceived', callback);
+        }
+        this._listenFns = [];
       }
-      this._listenFns = [];
     }
   }
 
-  listen(callback) {
+  listen(callback: (message: MessageObj) => Promise<void>) {
     return this.listenRaw(async (messageObj) => await callback(messageObj));
   }
 
@@ -345,7 +347,8 @@ export class Client {
     if (this._listenFns === null) {
       this._listenFns = [];
 
-      this._masterPage._client.on('Network.webSocketFrameReceived', async ({ response: { payloadData } }) => {
+      this._masterPage?._client.on('Network.webSocketFrameReceived', async ({ response }: Record<string, unknown>) => {
+        const { payloadData } = response as {payloadData: string};
         if (payloadData.length > 16) {
           try {
             const payload = atob(payloadData.substring(12));
@@ -366,12 +369,13 @@ export class Client {
                     messageId: delta.messageMetadata.messageId,
                     attachments: delta.attachments,
                   };
-
-                  for (const callback of this._listenFns) {
-                    this._messageQueueIncoming.push(async (finish) => {
-                      await callback(newMessage);
-                      finish();
-                    });
+                  if(this._listenFns) {
+                    for (const callback of this._listenFns) {
+                      this._messageQueueIncoming.push(async (finish) => {
+                        await callback(newMessage);
+                        finish();
+                      });
+                    }
                   }
                 case 'ClientPayload':
                   const parsedPayload = JSON.parse(delta.payload.map((c) => String.fromCharCode(c)).join(''));
